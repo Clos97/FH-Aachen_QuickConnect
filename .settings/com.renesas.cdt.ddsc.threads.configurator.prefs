@@ -1,0 +1,12 @@
+collapse/module.driver.at_transport_da16xxx_uart.1758860586=false
+collapse/module.driver.comms_i2c_on_comms_i2c_bus.178999704=false
+collapse/module.driver.comms_i2c_on_comms_i2c_device.1994581148=false
+collapse/module.driver.comms_i2c_on_comms_i2c_device.281062003=false
+collapse/module.driver.hs400x_on_hs400x.1079481547=false
+collapse/module.driver.i2c_on_sci_i2c.664520118=false
+collapse/module.driver.mqtt_onchip_da16xxx.592961444=false
+collapse/module.driver.uart_on_sci_uart.2039903418=false
+collapse/module.driver.wifi_da16xxx.456251839=false
+collapse/module.driver.zmod4410_iaq_2nd_on_zmod4xxx.735590608=false
+collapse/module.driver.zmod4xxx_on_zmod4xxx.492889054=false
+eclipse.preferences.version=1
