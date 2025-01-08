@@ -1,69 +1,81 @@
-## Overview
-This application project showcases the MQTT Cloud connectivity use case using the AWS IoT.
-In this application project, the RA MCU device will read sensor data through the I2C interface and publish
-the sensor data through the DA16200 Wi-Fi module using its onchip MQTT stack. It will first publish three times each sensor data and then will wait for user to publish 4 times on the LED topic before closing the MQTT connection.
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Renesas_Electronics_logo.svg/1200px-Renesas_Electronics_logo.svg.png)
+
+## Beschreibung
+Dieser Branch dient dem Austausch der Projektdaten für den Vortrag an der FH Aachen am 6. Januar 2025. Um den Code zu nutzen, kann dieser Branch geklont werden. Bitte beachten Sie, dass folgende Änderungen vorgenommen werden müssen:
+
+> [!TIP]
+> Falls sie sich fragen, was zu hölle er da über das Klonen redet und was Github ist, schauen sie sich diesen [Guide](https://github.com/git-guides) an. Falls sie im Rahmen ihres Studiums noch nicht mit Git bzw. GitHub gearbeitet habe, lohnt es sich gerade für die Informatikstudenten hier einen genaueren Blick drauf zu werfen. Git erleichtert das arbeiten mit Code ungemein und ist ein großer benefit.
 
 
-#### Instructions For Running the Application
-1. Follow the AWS IoT instructions to create a Thing.
-2. At this stage, it is assumed, that the user generate/build the QCStudio project.
-3. Open the user.h and add user Wifi SSID and Password, Username and AWS endpoint by modifying the following MACROS:
+**user.h:**
 ```c
-#define WIFI_SSID               "USER-WIFI-SSID"
-#define WIFI_PWD                "USER-WIFI-PASSWORD"
+#define WIFI_SSID               "" // Name WIFI Hotspot
+#define WIFI_PWD                ""   // Password für das WIFI
 
-#define IO_USERNAME             "USERNAME"
+#define IO_USERNAME             ""  // Insert Adafruit Username
+#define IO_PASSWORD             "" // Insert Adafruit Key
 
-#define EXAMPLE_MQTT_HOST       ("AWS-ENDPOINT")
+#define EXAMPLE_MQTT_HOST       "io.adafruit.com" // Hostname des Adafruit MQTT Brokers
+#define EXAMPLE_MQTT_PORT       1883 // Broker Port (Ohne SSL) - sonst 8883
 ```
-4. Open the certificate.h and provide the server certificate, user's client certificate, user's client private key by modifying the following MACROS:
-
+**main_thread_entry.c:**
 ```c
-/* server certificate */
-#define ROOT_CA                                          \
-"-----BEGIN CERTIFICATE-----\n" \
-"-----END CERTIFICATE-----\n"
+mqtt_onchip_da16xxx_cfg_t g_mqtt_onchip_da16xxx_usrcfg = g_mqtt_onchip_da16xxx_cfg;
+    g_mqtt_onchip_da16xxx_usrcfg.p_host_name = (char*) &EXAMPLE_MQTT_HOST;
+    // ==============USER INPUT=============
+	g_mqtt_onchip_da16xxx_usrcfg.mqtt_port = (uint32_t*) EXAMPLE_MQTT_PORT;
+    g_mqtt_onchip_da16xxx_usrcfg.p_mqtt_user_name = (char*) &IO_USERNAME;
+    g_mqtt_onchip_da16xxx_usrcfg.p_mqtt_password = (char*) &IO_PASSWORD;
+	//======================================
+    /* Initialize the MQTT Client connection */
+    result = RM_MQTT_DA16XXX_Open(&g_rm_mqtt_onchip_da16xxx_instance, &g_mqtt_onchip_da16xxx_usrcfg);
+    if(FSP_SUCCESS != result) {
+        log_error("MQTT Open failed");
+        utils_halt_func();
+    }
 
+    log_info("MQTT setup successful!");
 
-/* client certificate */
-#define CLIENT_CERT                                   \
-"-----BEGIN CERTIFICATE-----\n" \
-"-----END CERTIFICATE-----\n"
-
-
-/* client private key */
-#define PRIVATE_KEY                                   \
-"-----BEGIN RSA PRIVATE KEY-----\n" \
-"-----END RSA PRIVATE KEY-----\n"
+    vTaskDelay(100);
 ```
-5. Rebuild your QCStudio project. Click on the spanner icon (4th icon from top left) drop-down menu,
-select Build QCStudio project option.
-6. After a successful build, download the .srec file from the project debug folder to your local PC.
-7. Open the J-Flash Lite application on your local PC, and choose the MCU that matches your QCStudio project.
-8. Select the .srec file and program the kit
-9. At this stage, the MCU kit will start publishing sensor data to your AWS endpoint.
-10. Open your AWS IoT and click on MQTT Test client. 
-11. Check the user.h and subscribe for the topics avaliable for your sensor.\
-e.g: Sensor HS3001:\
-Topics:\
-*USERNAME*/feeds/temperature\
-*USERNAME*/feeds/humidity
-12. Publish on the LED topic to control the LED state.\
-Topics:\
-*USERNAME*/feeds/led -> 0 (Turn LED off)\
-*USERNAME*/feeds/led -> 1 (Turn LED on)
-13. User can configure Segger RTT Viewer to view the project log.
+Bitte beachten sie nur den mit `USER INPUT` markierten Code zu verändern. 
 
-#### Troubleshooting
-- Wifi not connecting:
-    - Check your wifi SSID and Password.   
-    - Ensure proper connection of the Sensor interposer. The sticker should be positioned on the bottom side.
-- AWS not connecting:
-    - Check your credentials and AWS IoT endpoint.
-    - Verify if your US159-DA16200MEVZ nave the latest SDK firmware. (Refer to "SDK Update Guide DA16200/DA16600" for instructions). 
+## Sep-by-Step Guide zur manuellen Inbetriebnahme
+Dieser Abschnitt ist der Step-by Step Guide zum nachmachen. Genau nach diesen Schritten habe ich das Quick Connect Kit in Betrieb genommen.
 
-## References
-1. AWS IoT: https://aws.amazon.com/iot-core/
-2. J-Link / J-Trace Downloads: https://www.segger.com/downloads/jlink/
-3. SDK Update Guide DA16200/DA16600: https://www.renesas.com/us/en/document/apn/da16200da16600-sdk-update-guide
-4. Interposer Board for Pmod™ Type 2A/3A to 6A: https://www.renesas.com/us/en/products/microcontrollers-microprocessors/us082-interpevz-interposer-board-pmod-type-2a3a-6a-renesas-quick-connect-iot
+### Renesas Quick Connect Studio
+1. Einloggen ins [Quick Connect Studio](https://www.renesas.com/en/software-tool/quickconnect-platform?srsltid=AfmBOoqOoXe73gcX2t_47y9pa-uIPPge-j1iXcJ2qqT1l8k9-dhf8Wwl)
+2. Erstellen eines neuen Projekts über das Ordner Symbol mit dem + 
+3. Auswählen des MCU Boards: Hier BGK-RA6E2
+4. Auswählen der Peripherie Module (DA16600 WiFi und ZMOD4410)
+5. Links eine Applikation auswählen: IoT->Other->Sensor Data to AWS Cloud (mit RTOS)
+6. Generate/ Build 
+7. AdafruitIO Schritt 1 und 2 bearbeiten
+8. Die oben gezeigten Änderungen in der `user.h` durchführen
+9. Die oben gezeigten Änderungen in der `main_thread_entry.c` durchführen
+10. Builden des Projektes
+11. Downloaden der e2 Studio Datei mittels des Download Symbols in der Rop leiste
+12. Öffnen von e2 Studio und hinzufügen eines Projektes aus einer vorhandenen Datei (File -> Open Projects from file system) - ==ACHTUNG: lieber einen neuen Workspace erstellen==
+13. FSP Konfiguration erstellen und anschließend Build 
+14. Mit Debug das Programm auf den Chip ziehen
+
+
+### AdafruitIO Cloud
+1. Erstellen eines Accounds bei der [AdafruitIO Cloud](https://io.adafruit.com/)
+2. Über das Schlüssel Symbol den Username und Active Key kopieren
+3. unter "Feeds" kann ein feed mit dem Namen `led` erstellt werden
+4. Erstellen eines Dashboards -Y Hinzufügen der gewünschen elemente
+
+> [!NOTE]
+> AdafruitIO erkennt neue Feeds automatisch sobald diese gepublished werden. Dies kann jedoch aufgrund des Temperieren des Gassensors ein wenig dauern. 5 Min sind hierbei normal.
+
+
+## Referenzen
+1. Adafruit IO Cloud: https://io.adafruit.com/
+2. Renesas Quick Connect Platform: https://www.renesas.com/en/software-tool/quickconnect-platform?srsltid=AfmBOoqOoXe73gcX2t_47y9pa-uIPPge-j1iXcJ2qqT1l8k9-dhf8Wwl
+3. Renesas e2 Studio: https://www.renesas.com/en/software-tool/e-studio?srsltid=AfmBOorKMyJJSAMZOAKhFQbQKmsO4UY4tBV_Dppl4pYMo_6jwVbCgF5P
+4. Informationen zum Quick Connect Kit: https://www.renesas.com/en/products/microcontrollers-microprocessors/ra-cortex-m-mcus/qc-bekitpocz-quickconnect-beginners-kit?srsltid=AfmBOopI0B0grAgQINxT0cq6MA0pc1WvGevrJBH-0JowJiV9Eh3Sgo2Y
+5. J-Link / J-Trace Downloads: https://www.segger.com/downloads/jlink/
+6. SDK Update Guide DA16200/DA16600: https://www.renesas.com/us/en/document/apn/da16200da16600-sdk-update-guide
+   
